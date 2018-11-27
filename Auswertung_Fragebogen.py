@@ -3,13 +3,14 @@ from Questionaire import *
 import matplotlib.pyplot as plt
 
 n_ges = 19
+path = 'data/Fragebogen_data.csv'
 
 def get_rare_data():
-    data_rare = pd.read_csv('data/Fragebogen_data.csv', sep = ";", encoding = "ISO-8859-1", error_bad_lines = False)
+    data_rare = pd.read_csv(path, sep = ";", encoding = "ISO-8859-1", error_bad_lines = False)
     return data_rare
 
 
-def split_into_categories(data_rare):
+def split_into_categories(data_rare):   #central method to adjust for other questionaires
     data_agreement = data_rare.loc[data_rare.iloc[:, 1] == 1] #check if user agreed to dataprocessing
     data = data_agreement.iloc[:,3:58] #just data without id, timestamp, etc. 
     cat3 = data_agreement.iloc[:, 3:5] #iloc last indes of [x:y] statement (y) is not included
@@ -48,7 +49,6 @@ def split_into_categories(data_rare):
     cat6_q7 = Question(text = cat6.columns.values[21], t_answer=cat6.iloc[:, 21])
     cat6_quests = [cat6_q1, cat6_q2, cat6_q3, cat6_q4, cat6_q5, cat6_q6, cat6_q7]
     
-
     cat7_q1 = Question(text = "Ich erfahre von den Arbeiten, die ich nutze …" , multiple_choice = True
         , m_c_answers=cat7.iloc[:, 0:6]) 
     cat7_q2 = Question(text = cat7.columns.values[6], t_answer=cat7.iloc[:, 6])
@@ -62,7 +62,6 @@ def split_into_categories(data_rare):
     cat8_q3 = Question(text = cat8.columns.values[2], s_c_answers=cat8.iloc[:, 2], answer_range_start=1, answer_range_end=4)
     cat8_quests = [cat8_q1, cat8_q2, cat8_q3]
 
-
     cat9_q1 = Question(text = cat9.name, s_c_answers=cat9, answer_range_start=1, answer_range_end=5) #scala
     cat9_quests = [cat9_q1]
 
@@ -70,20 +69,13 @@ def split_into_categories(data_rare):
     cat10_quests = [cat10_q1]
 
 
-
     catlist = [Category(questions=cat3_quests), Category(questions=cat4_quests), Category(questions=cat5_quests)
         , Category(questions=cat6_quests), Category(questions=cat7_quests), Category(questions=cat8_quests)
         , Category(questions=cat9_quests), Category(questions=cat10_quests)]
 
-    umfrage = Questionaire(categories = catlist)
-   # print(umfrage.categories[0].get_questions())
+    questionaire = Questionaire(categories = catlist)
 
-    #print(catlist[0].questions.head())
-
-
-
-
-    return umfrage
+    return questionaire
 
 
 def normalize_questionaire(questionaire):
@@ -92,12 +84,14 @@ def normalize_questionaire(questionaire):
         quests = cat.questions;
         for quest in quests:
             quest.normalize_answers();
+    #TODO: just normalize values that must be normalized
     return questionaire
 
 
 def calc_statistics():
     #TODO
     return None
+
 
 def visualize_statistics(questionaire):
     question_5_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 2)
@@ -106,8 +100,13 @@ def visualize_statistics(questionaire):
     question_5_3 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 3)
     plot_multiple_choice_question_heuristics(question_5_3)
 
+    question_6_1 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 1)
+    plot_single_choice_question_heuristics(question_6_1, labels=['... nur, wenn sie kostenlos sind.', '... auch, wenn sie kostenpflichtig sind.'])
 
-    plt.show(2)
+    question_6_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 2)
+    plot_multiple_choice_question_heuristics(question_6_2)
+
+    plt.show()
     
 
     #Ideen:
@@ -119,11 +118,29 @@ def visualize_statistics(questionaire):
     # Korrelation der Häufigkeiten der Tools mit Erfolg der letzten Arbeit?
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
-
     return None
 
 
-def plot_multiple_choice_question_heuristics(question):
+def plot_single_choice_question_heuristics(question, labels = []):
+    y = []
+    start = question.answer_range_start
+    end = question.answer_range_end
+        
+    for value in range(start, end + 1):
+        count_occurence = (question.single_choice_answers == value).sum();
+        y.append(count_occurence)
+
+    if len(labels) is 0:
+        labels = range(start, end + 1)
+    fig1, ax1 = plt.subplots()
+    ax1.pie(y, startangle=90, labels = labels)
+    ax1.axis('equal') 
+    plt.title(question.text)
+
+    
+
+
+def plot_multiple_choice_question_heuristics(question, subplot = False):
     answers = question.multiple_choice_answers
     x = answers.columns.values
     y = []
@@ -133,7 +150,10 @@ def plot_multiple_choice_question_heuristics(question):
         count_ones_occurence = (ans == 1).sum();
         y.append(count_ones_occurence)
     
-    plt.figure();
+    if subplot is False:
+        plt.figure();
+    else:
+        plt.subplot();
     plt.bar(x, y) 
     apply_figure_config_heuristics(question)
     #return fig
