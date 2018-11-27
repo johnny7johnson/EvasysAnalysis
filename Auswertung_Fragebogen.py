@@ -133,7 +133,6 @@ def visualize_statistics(questionaire):
 
     return None
 
-apply_figure_config(fig):
     
 
 
