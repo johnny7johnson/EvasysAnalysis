@@ -1,8 +1,11 @@
 #custom
-*.ipynb		
+*.ipynb
+.ipynb
 .ipynb_checkpoints
 pandas
 data
+
+
 
 
 # Byte-compiled / optimized / DLL files
