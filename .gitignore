@@ -1,3 +1,10 @@
+#custom
+*.ipynb		
+.ipynb_checkpoints
+pandas
+data
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
