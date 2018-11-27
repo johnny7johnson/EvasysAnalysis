@@ -2,6 +2,8 @@ import pandas as pd
 from Questionaire import *
 import matplotlib.pyplot as plt
 
+n_ges = 19
+
 def get_rare_data():
     data_rare = pd.read_csv('data/Fragebogen_data.csv', sep = ";", encoding = "ISO-8859-1", error_bad_lines = False)
     return data_rare
@@ -98,27 +100,14 @@ def calc_statistics():
     return None
 
 def visualize_statistics(questionaire):
-    question = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 2)
-    answers = question.multiple_choice_answers
-    x = answers.columns.values
-    y = []
-    for nr in range(0, answers.shape[1]):
-        ans = answers.iloc[:, nr].values
-        #y.append(ans.count("1"))
-        count_ones_occurence = (ans == 1).sum();
-        y.append(count_ones_occurence)
+    question_5_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 2)
+    plot_multiple_choice_question_heuristics(question_5_2)
     
-    plt.bar(x, y) 
-    plt.ylabel("x gewählt (n = 19)")
-    #plt.xticks(rotation = 'vertical')
-    plt.xticks(rotation = 70, fontsize = 8)
-    plt.subplots_adjust(bottom = 0.5)
-    plt.title(question.text)
-    plt.ylim(0, 19)
-
-    plt.show()
+    question_5_3 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 3)
+    plot_multiple_choice_question_heuristics(question_5_3)
 
 
+    plt.show(2)
     
 
     #Ideen:
@@ -132,6 +121,35 @@ def visualize_statistics(questionaire):
 
 
     return None
+
+
+def plot_multiple_choice_question_heuristics(question):
+    answers = question.multiple_choice_answers
+    x = answers.columns.values
+    y = []
+    for nr in range(0, answers.shape[1]):
+        ans = answers.iloc[:, nr].values
+        #y.append(ans.count("1"))
+        count_ones_occurence = (ans == 1).sum();
+        y.append(count_ones_occurence)
+    
+    plt.figure();
+    plt.bar(x, y) 
+    apply_figure_config_heuristics(question)
+    #return fig
+
+
+def apply_figure_config_heuristics(question):
+    label = 'x gewählt (n = ' + str(n_ges) + ')'
+    plt.ylabel(label)
+    apply_figure_config_all(question)
+    plt.ylim(0, n_ges)
+    plt.subplots_adjust(bottom = 0.5)
+
+
+def apply_figure_config_all(question):
+    plt.xticks(rotation = 70, fontsize = 8)
+    plt.title(question.text)
 
     
 
