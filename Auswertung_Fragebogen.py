@@ -1,29 +1,32 @@
 import pandas as pd 
 from Questionaire import *
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import numpy as np
 
-n_ges = 19
-path = 'data/Fragebogen_data.csv'
+N_GES = 19  #count subject
+PATH = 'data/Fragebogen_data_rare.csv'   #path to questionaire results from evasys as csv
 
 def get_rare_data():
-    data_rare = pd.read_csv(path, sep = ";", encoding = "ISO-8859-1", error_bad_lines = False)
+    data_rare = pd.read_csv(PATH, sep = ";", encoding = "ISO-8859-1", error_bad_lines = False,  na_values=['NaN', '[IMAGE]'])
     return data_rare
 
 
-def split_into_categories(data_rare):   #central method to adjust for other questionaires
+def split_into_questionaire(data_rare):   #central method to adjust for other questionaires
     data_agreement = data_rare.loc[data_rare.iloc[:, 1] == 1] #check if user agreed to dataprocessing
     data = data_agreement.iloc[:,3:58] #just data without id, timestamp, etc. 
-    cat3 = data_agreement.iloc[:, 3:5] #iloc last indes of [x:y] statement (y) is not included
+    
+    #split into categories
+    cat3 = data_agreement.iloc[:, 3:5] #iloc last indes of [x:y] statement (y) is not included -> cat 3 includes indices 3 and 4
     cat4 = data_agreement.iloc[:, 5:7]
-    cat5 = data_agreement.iloc[:, 7:17] #TODO: answers
-    cat6 = data_agreement.iloc[:, 17:39] #TODO: answers
-    cat7 = data_agreement.iloc[:, 39:53] #TODO: answers
+    cat5 = data_agreement.iloc[:, 7:17] 
+    cat6 = data_agreement.iloc[:, 17:39] 
+    cat7 = data_agreement.iloc[:, 39:53] 
     cat8 = data_agreement.iloc[:, 53:56] 
     cat9 = data_agreement.iloc[:, 56] 
     cat10 = data_agreement.iloc[:, 57]
 
-    #Split into questions
-    #cat3
+    #Split categories into questions
     cat3_q1 = Question(text = cat3.columns.values[0], s_c_answers=cat3.iloc[:, 0], answer_range_start=1, answer_range_end=2)
     cat3_q2 = Question(text = cat3.columns.values[1], s_c_answers=cat3.iloc[:, 1], answer_range_start=1, answer_range_end=2)
     cat3_quests = [cat3_q1, cat3_q2]
@@ -93,7 +96,7 @@ def calc_statistics():
     return None
 
 
-def visualize_statistics(questionaire):
+def visualize_statistics(questionaire): #adjust for own usage
     question_5_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 2)
     plot_multiple_choice_question_heuristics(question_5_2)
     
@@ -101,14 +104,21 @@ def visualize_statistics(questionaire):
     plot_multiple_choice_question_heuristics(question_5_3)
 
     question_6_1 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 1)
-    plot_single_choice_question_heuristics(question_6_1, labels=['... nur, wenn sie kostenlos sind.', '... auch, wenn sie kostenpflichtig sind.'])
+    plot_single_choice_question_heuristics(question_6_1
+        , labels=['... nur, wenn sie kostenlos sind.', '... auch, wenn sie kostenpflichtig sind.']
+        , free_text=['hello', 'world'])
 
     question_6_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 2)
-    plot_multiple_choice_question_heuristics(question_6_2)
+    question_6_3 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 3)
+    boolvec = ~question_6_3.text_answer.isnull()
+    texts = question_6_3.text_answer.values[boolvec]
+    plot_multiple_choice_question_heuristics(question_6_2
+        , free_text=texts
+        , free_text_question=question_6_3.text)
 
     plt.show()
     
-
+    
     #Ideen:
     #1) Häufigkeiten der nutzung und Beschaffung von arbeiten als Tortendiagramm/Balkendiagramm
     #2) Histogramm über nutzung von Tools
@@ -119,9 +129,9 @@ def visualize_statistics(questionaire):
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
     return None
+    
 
-
-def plot_single_choice_question_heuristics(question, labels = []):
+def plot_single_choice_question_heuristics(question, labels = [], free_text = [], free_text_question = "Freitext:"):
     y = []
     start = question.answer_range_start
     end = question.answer_range_end
@@ -135,12 +145,16 @@ def plot_single_choice_question_heuristics(question, labels = []):
     fig1, ax1 = plt.subplots()
     ax1.pie(y, startangle=90, labels = labels)
     ax1.axis('equal') 
-    plt.title(question.text)
 
-    
+    if len(free_text) is not 0:
+        add_free_text_to_figure(free_text, ax1)
 
 
-def plot_multiple_choice_question_heuristics(question, subplot = False):
+    apply_figure_config_all(question)
+
+
+
+def plot_multiple_choice_question_heuristics(question, subplot = False, free_text = [], free_text_question = "Freitext:"):
     answers = question.multiple_choice_answers
     x = answers.columns.values
     y = []
@@ -151,19 +165,34 @@ def plot_multiple_choice_question_heuristics(question, subplot = False):
         y.append(count_ones_occurence)
     
     if subplot is False:
-        plt.figure();
+        fig, ax1 = plt.subplots();
     else:
-        plt.subplot();
+        fig, ax1 = plt.subplot(2, 2, 1);
     plt.bar(x, y) 
+
+    if len(free_text) is not 0:
+        add_free_text_to_figure(free_text, ax1)
+    
     apply_figure_config_heuristics(question)
     #return fig
 
 
+def add_free_text_to_figure(text, ax, question_text = "Freitext:"):
+    if len(text) >= 10:
+        plt.subplots_adjust(bottom = 0.9)
+    else:
+        plt.subplots_adjust(bottom = len(text)/10)
+    plt.text(0, 0, question_text, ha='center', va='center', transform=ax.transAxes)
+    for i in range(1, len(text)+1):
+        plt.text(0, -i/10, text[i-1], ha='center', va='center', transform=ax.transAxes)
+        plt.text(0, -i/10, text[i-1], ha='center', va='center', transform=ax.transAxes)
+
+
 def apply_figure_config_heuristics(question):
-    label = 'x gewählt (n = ' + str(n_ges) + ')'
+    label = 'x gewählt (n = ' + str(N_GES) + ')'
     plt.ylabel(label)
     apply_figure_config_all(question)
-    plt.ylim(0, n_ges)
+    plt.ylim(0, N_GES)
     plt.subplots_adjust(bottom = 0.5)
 
 
@@ -177,15 +206,11 @@ def apply_figure_config_all(question):
 
 def main():
     data_rare = get_rare_data()
-    splitted = split_into_categories(data_rare)
+    splitted = split_into_questionaire(data_rare)
     print(splitted.categories[0].get_questions())
     # normalized = normalize_questionaire(splitted)
     # print(normalized.categories[0].get_questions())
     visualize_statistics(splitted)
-
-
-
-
 
 
 if __name__ == "__main__":
