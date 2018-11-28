@@ -1,8 +1,8 @@
 import pandas as pd 
-from Questionaire import *
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+from Questionaire import *
 from QuestVis import visualize_statistics
 
 N_GES = 19  #count subject
@@ -103,9 +103,8 @@ def main():
     data_rare = get_rare_data()
     splitted = split_into_questionaire(data_rare)
     print(splitted.categories[0].get_questions())
-    # normalized = normalize_questionaire(splitted)
-    # print(normalized.categories[0].get_questions())
-    visualize_statistics(splitted, filtered=True, heuristics=False)
+    # TODO: call normalize on questions if nesassary 
+    visualize_statistics(splitted, filtered=True, heuristics=True)
 
 
 if __name__ == "__main__":

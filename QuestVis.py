@@ -1,9 +1,9 @@
 import pandas as pd 
-from Questionaire import *
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import copy
+from Questionaire import *
 
 N_GES = 19  #count subject
 
@@ -12,6 +12,11 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     q = questionaire.get_question_by_questionaire_nr #alias method as q
 
     if heuristics:
+        question_5_1 = q(categoryNr = 5, questionNr = 1)
+        answers_5_1 = question_5_1.single_choice_answers.astype(int)
+        plot_scala_question_heuristics_hist(question_5_1, answers_5_1
+            , labels=['Sehr häufig', '2', '3', '4', 'Fast nie'], n=len(answers_5_1))
+        
         question_5_2 = q(categoryNr = 5, questionNr = 2)
         plot_multiple_choice_question_heuristics(question_5_2)
     
