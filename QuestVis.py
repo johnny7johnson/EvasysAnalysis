@@ -1,6 +1,7 @@
 import pandas as pd 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import seaborn as sns
 import numpy as np
 import copy
 from Questionaire import *
@@ -18,10 +19,10 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
             , labels=['Sehr häufig', '2', '3', '4', 'Fast nie'], n=len(answers_5_1))
         
         question_5_2 = q(categoryNr = 5, questionNr = 2)
-        plot_multiple_choice_question_heuristics(question_5_2)
+        plot_multiple_choice_question_heuristics_bar(question_5_2)
     
         question_5_3 = q(categoryNr = 5, questionNr = 3)
-        plot_multiple_choice_question_heuristics(question_5_3)
+        plot_multiple_choice_question_heuristics_bar(question_5_3)
 
         question_6_1 = q(categoryNr = 6, questionNr = 1)
         plot_single_choice_question_heuristics_pie(question_6_1
@@ -32,7 +33,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         question_6_3 = q(categoryNr = 6, questionNr = 3)
         boolvec = ~question_6_3.text_answer.isnull()
         texts = question_6_3.text_answer.values[boolvec]
-        plot_multiple_choice_question_heuristics(question_6_2
+        plot_multiple_choice_question_heuristics_bar(question_6_2
             , free_text=texts
             , free_text_question=question_6_3.text)
 
@@ -40,7 +41,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         question_6_5 = q(categoryNr = 6, questionNr = 5)
         boolvec = ~question_6_5.text_answer.isnull()
         texts = question_6_5.text_answer.values[boolvec]
-        plot_multiple_choice_question_heuristics(question_6_4
+        plot_multiple_choice_question_heuristics_bar(question_6_4
             , free_text=texts
             , free_text_question=question_6_5.text)
 
@@ -48,7 +49,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         question_6_7 = q(categoryNr = 6, questionNr = 7)
         boolvec = ~question_6_7.text_answer.isnull()
         texts = question_6_7.text_answer.values[boolvec]
-        plot_multiple_choice_question_heuristics(question_6_6
+        plot_multiple_choice_question_heuristics_bar(question_6_6
             , free_text=texts
             , free_text_question=question_6_7.text)
 
@@ -76,12 +77,12 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         question_5_2 = copy.deepcopy(q(categoryNr = 5, questionNr = 2))
         title = question_5_2.text
         question_5_2.multiple_choice_answers = question_5_2.multiple_choice_answers[workedScientific]
-        plot_multiple_choice_question_heuristics(question_5_2, n=len(question_5_2.multiple_choice_answers))
+        plot_multiple_choice_question_heuristics_bar(question_5_2, n=len(question_5_2.multiple_choice_answers))
         plt.title(title + '\n - Bereits wissenschaftlich gearbeitet')
 
         question_5_2 = copy.deepcopy(q(categoryNr = 5, questionNr = 2))
         question_5_2.multiple_choice_answers = question_5_2.multiple_choice_answers[~workedScientific]
-        plot_multiple_choice_question_heuristics(question_5_2, n=len(question_5_2.multiple_choice_answers))
+        plot_multiple_choice_question_heuristics_bar(question_5_2, n=len(question_5_2.multiple_choice_answers))
         plt.title(title + '\n - Noch nie wissenschaftlich gearbeitet')
 
         question_9_1 = q(categoryNr = 9, questionNr = 1)
@@ -97,11 +98,16 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         plot_scala_question_heuristics_hist(question_9_1, answers_9_1
             , labels=['Ich fühle mich überfordert', '2', '3', '4', 'Ich komme gut klar']
             , n=len(answers_9_1))
-        # plt.figure()
         plt.title(title + '\n - Noch nie wissenschaftlich gearbeitet')
-        # plt.hist(answers_9_1, bins = [1 , 2, 3, 4, 5] )
-        # plt.xticks(np.arange(15, 5.5), ['Ich fühle mich überfordert', '2', '3', '4', 'Ich komme gut klar'])
-        # plt.axis([1, 6, 0, 9])
+
+        #split into 2+3 (often) and 4+5 (rare)
+        question_5_1 = q(categoryNr = 5, questionNr = 1)
+        answers_5_1[answers_5_1 == 2] = 'often'
+        answers_5_1[answers_5_1 == 3] = 'often'
+        answers_5_1[answers_5_1 == 4] = 'rare'
+        answers_5_1[answers_5_1 == 5] = 'rare'
+        plot_cross_table(answers_5_1, q(categoryNr = 6, questionNr = 1).single_choice_answers)
+
 
     plt.show()
     
@@ -116,6 +122,18 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
 
+def plot_cross_table(x_hist, y_hist):
+    df = pd.DataFrame({'mark':x_hist,'period':y_hist})
+    ct = pd.crosstab(df.period, df.mark)
+    #ct = pd.crosstab(x_hist, y_hist)
+
+     # now stack and reset
+    stacked = ct.stack().reset_index().rename(columns={0:'value'})
+
+    # plot grouped bar chart
+    sns.barplot(x=stacked.period, y=stacked.value, hue=stacked.mark)
+    #TODO: manage on multiplechoice answers
+    #https://stackoverflow.com/questions/43544694/using-pandas-crosstab-with-seaborn-stacked-barplots
 
 
 def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 , n = -1):
@@ -149,13 +167,12 @@ def plot_single_choice_question_heuristics_pie(question, labels = [], free_text 
 
 
 
-def plot_multiple_choice_question_heuristics(question, subplot = False, free_text = [], free_text_question = "Freitext:", n = -1):
+def plot_multiple_choice_question_heuristics_bar(question, subplot = False, free_text = [], free_text_question = "Freitext:", n = -1):
     answers = question.multiple_choice_answers
     x = answers.columns.values
     y = []
     for nr in range(0, answers.shape[1]):
         ans = answers.iloc[:, nr].values
-        #y.append(ans.count("1"))
         count_ones_occurence = (ans == 1).sum();
         y.append(count_ones_occurence)
     
@@ -169,7 +186,7 @@ def plot_multiple_choice_question_heuristics(question, subplot = False, free_tex
         add_free_text_to_figure(free_text, ax1)
     
     apply_figure_config_heuristics(question, n=n)
-    #return fig
+
 
 
 def add_free_text_to_figure(text, ax, question_text = "Freitext:"):
