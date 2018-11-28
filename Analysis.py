@@ -17,7 +17,7 @@ def split_into_questionaire(data_rare):   #central method to adjust for other qu
     data_agreement = data_rare.loc[data_rare.iloc[:, 1] == 1] #check if user agreed to dataprocessing
     data = data_agreement.iloc[:,3:58] #just data without id, timestamp, etc. 
     
-    #split into categories
+    #split dataframe into categories
     cat3 = data_agreement.iloc[:, 3:5] #iloc last indes of [x:y] statement (y) is not included -> cat 3 includes indices 3 and 4
     cat4 = data_agreement.iloc[:, 5:7]
     cat5 = data_agreement.iloc[:, 7:17] 
@@ -27,7 +27,7 @@ def split_into_questionaire(data_rare):   #central method to adjust for other qu
     cat9 = data_agreement.iloc[:, 56] 
     cat10 = data_agreement.iloc[:, 57]
 
-    #Split categories into questions
+    #Split categories into questions and group them
     cat3_q1 = Question(text = cat3.columns.values[0], s_c_answers=cat3.iloc[:, 0], answer_range_start=1, answer_range_end=2)
     cat3_q2 = Question(text = cat3.columns.values[1], s_c_answers=cat3.iloc[:, 1], answer_range_start=1, answer_range_end=2)
     cat3_quests = [cat3_q1, cat3_q2]
@@ -72,7 +72,7 @@ def split_into_questionaire(data_rare):   #central method to adjust for other qu
     cat10_q1 = Question(text = cat10.name, t_answer=cat10) 
     cat10_quests = [cat10_q1]
 
-
+    #insert into questionaire
     catlist = [Category(questions=cat3_quests), Category(questions=cat4_quests), Category(questions=cat5_quests)
         , Category(questions=cat6_quests), Category(questions=cat7_quests), Category(questions=cat8_quests)
         , Category(questions=cat9_quests), Category(questions=cat10_quests)]
@@ -105,7 +105,7 @@ def main():
     print(splitted.categories[0].get_questions())
     # normalized = normalize_questionaire(splitted)
     # print(normalized.categories[0].get_questions())
-    visualize_statistics(splitted, plot=False)
+    visualize_statistics(splitted, filtered=True, heuristics=False)
 
 
 if __name__ == "__main__":
