@@ -14,12 +14,14 @@ class Question:
         self.answer_range_start = answer_range_start;
         self.answer_range_end = answer_range_end;
 
-    def normalize_answers(self):
+    def normalize_answers(self, asint = False):
         if self.is_multiple_choice is True:
             for x in range(0, len(self.multiple_choice_answers)-1):
                 self.multiple_choice_answers[:,x] = preprocessing.normalize(self.multiple_choice_answers[:,x])
         elif len(self.single_choice_answers) > 0:
             self.single_choice_answers = preprocessing.normalize([self.single_choice_answers])
+            if asint:
+                self.single_choice_answers = self.single_choice_answers.astype(int)
         else:
             return self
         return self

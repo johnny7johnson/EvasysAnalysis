@@ -105,7 +105,7 @@ def main():
     print(splitted.categories[0].get_questions())
     # normalized = normalize_questionaire(splitted)
     # print(normalized.categories[0].get_questions())
-    visualize_statistics(splitted)
+    visualize_statistics(splitted, plot=False)
 
 
 if __name__ == "__main__":

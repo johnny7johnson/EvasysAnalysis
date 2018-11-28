@@ -7,42 +7,59 @@ import numpy as np
 N_GES = 19  #count subject
 
 
-def visualize_statistics(questionaire): #adjust for own usage
-    question_5_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 2)
-    plot_multiple_choice_question_heuristics(question_5_2)
+def visualize_statistics(questionaire, plot = True): #adjust for own usage
+    q = questionaire.get_question_by_questionaire_nr #alias method as q
+
+    if plot:
+        question_5_2 = q(categoryNr = 5, questionNr = 2)
+        plot_multiple_choice_question_heuristics(question_5_2)
     
-    question_5_3 = questionaire.get_question_by_questionaire_nr(categoryNr = 5, questionNr = 3)
-    plot_multiple_choice_question_heuristics(question_5_3)
+        question_5_3 = q(categoryNr = 5, questionNr = 3)
+        plot_multiple_choice_question_heuristics(question_5_3)
 
-    question_6_1 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 1)
-    plot_single_choice_question_heuristics(question_6_1
-        , labels=['... nur, wenn sie kostenlos sind.', '... auch, wenn sie kostenpflichtig sind.']
-        , free_text=['hello', 'world'])
+        question_6_1 = q(categoryNr = 6, questionNr = 1)
+        plot_single_choice_question_heuristics_pie(question_6_1
+            , labels=['... nur, wenn sie kostenlos sind.', '... auch, wenn sie kostenpflichtig sind.']
+            , free_text=['hello', 'world'])
 
-    question_6_2 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 2)
-    question_6_3 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 3)
-    boolvec = ~question_6_3.text_answer.isnull()
-    texts = question_6_3.text_answer.values[boolvec]
-    plot_multiple_choice_question_heuristics(question_6_2
-        , free_text=texts
-        , free_text_question=question_6_3.text)
+        question_6_2 = q(categoryNr = 6, questionNr = 2)
+        question_6_3 = q(categoryNr = 6, questionNr = 3)
+        boolvec = ~question_6_3.text_answer.isnull()
+        texts = question_6_3.text_answer.values[boolvec]
+        plot_multiple_choice_question_heuristics(question_6_2
+            , free_text=texts
+            , free_text_question=question_6_3.text)
 
-    question_6_4 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 4)
-    question_6_5 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 5)
-    boolvec = ~question_6_5.text_answer.isnull()
-    texts = question_6_5.text_answer.values[boolvec]
-    plot_multiple_choice_question_heuristics(question_6_4
-        , free_text=texts
-        , free_text_question=question_6_5.text)
+        question_6_4 = q(categoryNr = 6, questionNr = 4)
+        question_6_5 = q(categoryNr = 6, questionNr = 5)
+        boolvec = ~question_6_5.text_answer.isnull()
+        texts = question_6_5.text_answer.values[boolvec]
+        plot_multiple_choice_question_heuristics(question_6_4
+            , free_text=texts
+            , free_text_question=question_6_5.text)
 
-    question_6_6 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 6)
-    question_6_7 = questionaire.get_question_by_questionaire_nr(categoryNr = 6, questionNr = 7)
-    boolvec = ~question_6_7.text_answer.isnull()
-    texts = question_6_7.text_answer.values[boolvec]
-    plot_multiple_choice_question_heuristics(question_6_6
-        , free_text=texts
-        , free_text_question=question_6_7.text)
+        question_6_6 = q(categoryNr = 6, questionNr = 6)
+        question_6_7 = q(categoryNr = 6, questionNr = 7)
+        boolvec = ~question_6_7.text_answer.isnull()
+        texts = question_6_7.text_answer.values[boolvec]
+        plot_multiple_choice_question_heuristics(question_6_6
+            , free_text=texts
+            , free_text_question=question_6_7.text)
 
+    if ~plot: 
+    #check if people already worked scientificaly
+        workedScientific = (q(categoryNr = 8, questionNr = 1).single_choice_answers==1)
+        question_8_2 = q(categoryNr = 8, questionNr = 2)
+        answers_8_2 = question_8_2.single_choice_answers[workedScientific].astype(int)
+        plot_scala_question_heuristics_hist(question_8_2, answers_8_2
+            , labels=['Sehr erfolgreich', '2', '3', '4', 'War ein Reinfall'], n=len(answers_8_2))
+
+        question_8_3 = q(categoryNr = 8, questionNr = 3)
+        answers_8_3 = question_8_3.single_choice_answers[workedScientific].astype(int)
+        plot_single_choice_question_heuristics_pie(question_8_3, labels=['Abschlussarbeit', 'Studienarbeit', 'Journalartikel', 'Sonstige'])
+
+        
+    
     plt.show()
     
     
@@ -55,10 +72,17 @@ def visualize_statistics(questionaire): #adjust for own usage
     # Korrelation der Häufigkeiten der Tools mit Erfolg der letzten Arbeit?
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
-    return None
-    
 
-def plot_single_choice_question_heuristics(question, labels = [], free_text = [], free_text_question = "Freitext:"):
+
+
+def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 , n = -1):
+    plt.figure()
+    plt.hist(vector, bins = range(1,bins + 1))
+    plt.xticks(np.arange(bins), (labels))
+    apply_figure_config_heuristics(question, n = n)
+
+
+def plot_single_choice_question_heuristics_pie(question, labels = [], free_text = [], free_text_question = "Freitext:", n = -1):
     y = []
     start = question.answer_range_start
     end = question.answer_range_end
@@ -81,7 +105,7 @@ def plot_single_choice_question_heuristics(question, labels = [], free_text = []
 
 
 
-def plot_multiple_choice_question_heuristics(question, subplot = False, free_text = [], free_text_question = "Freitext:"):
+def plot_multiple_choice_question_heuristics(question, subplot = False, free_text = [], free_text_question = "Freitext:", n = -1):
     answers = question.multiple_choice_answers
     x = answers.columns.values
     y = []
@@ -112,17 +136,18 @@ def add_free_text_to_figure(text, ax, question_text = "Freitext:"):
     plt.text(0, 0, question_text, ha='center', va='center', transform=ax.transAxes)
     for i in range(1, len(text)+1):
         plt.text(0, -i/10, text[i-1], ha='center', va='center', transform=ax.transAxes)
-        plt.text(0, -i/10, text[i-1], ha='center', va='center', transform=ax.transAxes)
 
 
-def apply_figure_config_heuristics(question):
-    label = 'x gewählt (n = ' + str(N_GES) + ')'
+def apply_figure_config_heuristics(question, n = -1):
+    if n < 0:
+        n = N_GES
+    label = 'x gewählt (n = ' + str(n) + ')'
     plt.ylabel(label)
     apply_figure_config_all(question)
-    plt.ylim(0, N_GES)
+    plt.ylim(0, n)
     plt.subplots_adjust(bottom = 0.5)
 
-
+ 
 def apply_figure_config_all(question):
     plt.xticks(rotation = 70, fontsize = 8)
     plt.title(question.text)
