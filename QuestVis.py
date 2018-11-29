@@ -111,8 +111,39 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         answers_6_1 = question_6_1.single_choice_answers
         answers_6_1[answers_6_1 == 1] = 'nur wenn kostenlos'
         answers_6_1[answers_6_1 == 2] = 'auch wenn kostenpflichtig'
+        #answers_6_1[5] = "trolololo"
 
-        plot_cross_table(answers_5_1, answers_6_1, question_6_1, question_5_1, custom_color_label="Häufigkeit der Nutzung")
+        plot_cross_table(answers_6_1, answers_5_1, question_6_1, question_5_1, custom_color_label="Häufigkeit der Nutzung")
+
+
+                #split into 2+3 (often) and 4+5 (rare)
+        question_5_1 = q(categoryNr = 5, questionNr = 1)
+        answers_5_1 = question_5_1.single_choice_answers
+        answers_5_1[answers_5_1 == 2] = 'oft'
+        answers_5_1[answers_5_1 == 3] = 'oft'
+        answers_5_1[answers_5_1 == 4] = 'selten'
+        answers_5_1[answers_5_1 == 5] = 'selten'
+        question_5_2 = q(categoryNr = 5, questionNr = 2)
+        answers_5_2 = question_5_2.multiple_choice_answers
+
+        # x = [answers_5_2.iloc[:,0], answers_5_2.iloc[:,1] ]
+        # ct = pd.crosstab(x, answers_5_1,  margins=True)
+        # print(ct)
+        # stacked = ct.stack().reset_index().rename(columns={0:'value'})
+
+        # fig, ax = plt.subplots()
+        # sns.barplot(x=x, y=stacked.value, hue= answers_5_1)
+
+        # heurisctics_5_2 = []
+        # heurisctics_5_2 = answers_5_2.values.tolist()
+        # shape = answers_5_2.shape[1] #should be 5
+        # for nr in range(0, shape):
+        #     ans = answers_5_2.iloc[:, nr].values
+        #     count_ones_occurence = (ans == 1).sum();
+        #     heurisctics_5_2.append(count_ones_occurence)
+        
+        plot_grouped_multiple_choice(question_5_2, answers_5_1, question_5_2)
+        #plot_cross_table(heurisctics_5_2, answers_5_1, answers_5_2, question_5_1, custom_color_label="Häufigkeit der Nutzung")
         
 
     plt.show()
@@ -128,26 +159,58 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
 
+def plot_grouped_multiple_choice(m_c_question, groups, group_question, custon_groups_label = ""):
+
+    countedGroups = []
+    for group in np.unique(groups):
+        indices_of_group = [i for i, x in enumerate(groups == group) if x]
+        filtered = m_c_question.multiple_choice_answers.iloc[indices_of_group, :]
+        heuristics = []
+        for nr in range(0, m_c_question.multiple_choice_answers.shape[1]):
+            ans = filtered.iloc[:, nr].values
+            count_ones_occurence = (ans == 1).sum();
+            heuristics.append(count_ones_occurence)
+        countedGroups.append(heuristics)
+
+    #bis hier hin gut :)
+
+    # set width of bar
+    barWidth = 0.25
+    
+    rs = []
+    r0 = np.arange(len(countedGroups[0]))
+    r = r0
+    rs.append(r0)
+
+    maxgroups = len(np.unique(groups))
+    for num in range(1, maxgroups):
+        r_new = [x + barWidth for x in r]
+        rs.append(r_new)
+        r = r_new
+    
+    plt.subplots()
+    for num in range(0, maxgroups):
+        plt.bar(rs[num], countedGroups[num], color='#7f6d5f', width=barWidth, edgecolor='white', label=np.unique(groups)[num])
+
+
+
+
 def plot_cross_table(x_hist, y_hist, group_bars_question, group_color_question, custom_color_label = ""):
-    # df = pd.DataFrame({group_color_question.text:x_hist,group_bars_question.text:y_hist}) #how many values has y?
-    # ct = pd.crosstab(df.iloc[:,1], df.iloc[:,0])
-    #ct = pd.crosstab(x_hist, y_hist)
 
-    df = pd.DataFrame({'colors':x_hist,'bars':y_hist}) #how many values has y?
+    df = pd.DataFrame({'colors':y_hist,'bars':x_hist}) #how many values has y?
     ct = pd.crosstab(df.bars, df.colors)
-
-     # now stack and reset
+    print(ct)
     stacked = ct.stack().reset_index().rename(columns={0:'value'})
 
     fig, ax = plt.subplots()
-    # plot grouped bar chart
     sns.barplot(x=stacked.bars, y=stacked.value, hue=stacked.colors)
     #TODO: manage on multiplechoice answers
-    #https://stackoverflow.com/questions/43544694/using-pandas-crosstab-with-seaborn-stacked-barplots
     plt.xlabel(group_bars_question.text)
     l = ax.legend()
     l.set_title(custom_color_label)
     plt.title("Unterschied zwischen \n'" +group_bars_question.text + "'\n UND \n'" + group_color_question.text + "'")
+
+    #https://stackoverflow.com/questions/43544694/using-pandas-crosstab-with-seaborn-stacked-barplots
 
 
 def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 , n = -1):
