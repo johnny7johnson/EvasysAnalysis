@@ -142,7 +142,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         #     count_ones_occurence = (ans == 1).sum();
         #     heurisctics_5_2.append(count_ones_occurence)
         
-        plot_grouped_multiple_choice(question_5_2, answers_5_1, question_5_2)
+        plot_grouped_multiple_choice_percentages(question_5_2, answers_5_1, question_5_1)
         #plot_cross_table(heurisctics_5_2, answers_5_1, answers_5_2, question_5_1, custom_color_label="Häufigkeit der Nutzung")
         
 
@@ -159,23 +159,28 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
 
-def plot_grouped_multiple_choice(m_c_question, groups, group_question, custon_groups_label = ""):
+def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_question, custon_groups_label = ""):
 
     countedGroups = []
+    groupsizes = []
     for group in np.unique(groups):
         indices_of_group = [i for i, x in enumerate(groups == group) if x]
         filtered = m_c_question.multiple_choice_answers.iloc[indices_of_group, :]
+        groupsize = len(filtered)
         heuristics = []
         for nr in range(0, m_c_question.multiple_choice_answers.shape[1]):
             ans = filtered.iloc[:, nr].values
             count_ones_occurence = (ans == 1).sum();
-            heuristics.append(count_ones_occurence)
+            percentages = count_ones_occurence/groupsize*100
+            heuristics.append(percentages)
         countedGroups.append(heuristics)
+        groupsizes.append(groupsize)
 
     #bis hier hin gut :)
 
+    colors=['cornflowerblue','darkorange','c','r','g']
     # set width of bar
-    barWidth = 0.25
+    barWidth = (1-0.2)/len(np.unique(groups))
     
     rs = []
     r0 = np.arange(len(countedGroups[0]))
@@ -190,7 +195,16 @@ def plot_grouped_multiple_choice(m_c_question, groups, group_question, custon_gr
     
     plt.subplots()
     for num in range(0, maxgroups):
-        plt.bar(rs[num], countedGroups[num], color='#7f6d5f', width=barWidth, edgecolor='white', label=np.unique(groups)[num])
+        label = "" + str(np.unique(groups)[num]) + " (n = " + str(groupsizes[num]) + " )"
+        plt.bar(rs[num], countedGroups[num], color=colors[num], width=barWidth, edgecolor='white', label=label)
+
+
+    plt.xticks([r[0]-0.25 + barWidth for r[0] in range(len(countedGroups[0]))], m_c_question.multiple_choice_answers.columns.values)
+    apply_figure_config_heuristics(m_c_question, n=100)
+    plt.title("Unterschied zwischen \n'" +m_c_question.text + "'\n UND \n'" + group_question.text + "'")
+    plt.xlabel(m_c_question.text)
+    plt.ylabel('% ausgewählt')
+    plt.legend()
 
 
 
