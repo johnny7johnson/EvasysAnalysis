@@ -104,7 +104,7 @@ def main():
     splitted = split_into_questionaire(data_rare)
     print(splitted.categories[0].get_questions())
     # TODO: call normalize on questions if nesassary 
-    visualize_statistics(splitted, filtered=True, heuristics=True)
+    visualize_statistics(splitted, filtered=True, heuristics=False)
 
 
 if __name__ == "__main__":

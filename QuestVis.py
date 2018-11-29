@@ -102,12 +102,18 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
 
         #split into 2+3 (often) and 4+5 (rare)
         question_5_1 = q(categoryNr = 5, questionNr = 1)
-        answers_5_1[answers_5_1 == 2] = 'often'
-        answers_5_1[answers_5_1 == 3] = 'often'
-        answers_5_1[answers_5_1 == 4] = 'rare'
-        answers_5_1[answers_5_1 == 5] = 'rare'
-        plot_cross_table(answers_5_1, q(categoryNr = 6, questionNr = 1).single_choice_answers)
+        answers_5_1 = question_5_1.single_choice_answers
+        answers_5_1[answers_5_1 == 2] = 'oft'
+        answers_5_1[answers_5_1 == 3] = 'oft'
+        answers_5_1[answers_5_1 == 4] = 'selten'
+        answers_5_1[answers_5_1 == 5] = 'selten'
+        question_6_1 = q(categoryNr = 6, questionNr = 1)
+        answers_6_1 = question_6_1.single_choice_answers
+        answers_6_1[answers_6_1 == 1] = 'nur wenn kostenlos'
+        answers_6_1[answers_6_1 == 2] = 'auch wenn kostenpflichtig'
 
+        plot_cross_table(answers_5_1, answers_6_1, question_6_1, question_5_1, custom_color_label="Häufigkeit der Nutzung")
+        
 
     plt.show()
     
@@ -122,18 +128,26 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
 
-def plot_cross_table(x_hist, y_hist):
-    df = pd.DataFrame({'mark':x_hist,'period':y_hist})
-    ct = pd.crosstab(df.period, df.mark)
+def plot_cross_table(x_hist, y_hist, group_bars_question, group_color_question, custom_color_label = ""):
+    # df = pd.DataFrame({group_color_question.text:x_hist,group_bars_question.text:y_hist}) #how many values has y?
+    # ct = pd.crosstab(df.iloc[:,1], df.iloc[:,0])
     #ct = pd.crosstab(x_hist, y_hist)
+
+    df = pd.DataFrame({'colors':x_hist,'bars':y_hist}) #how many values has y?
+    ct = pd.crosstab(df.bars, df.colors)
 
      # now stack and reset
     stacked = ct.stack().reset_index().rename(columns={0:'value'})
 
+    fig, ax = plt.subplots()
     # plot grouped bar chart
-    sns.barplot(x=stacked.period, y=stacked.value, hue=stacked.mark)
+    sns.barplot(x=stacked.bars, y=stacked.value, hue=stacked.colors)
     #TODO: manage on multiplechoice answers
     #https://stackoverflow.com/questions/43544694/using-pandas-crosstab-with-seaborn-stacked-barplots
+    plt.xlabel(group_bars_question.text)
+    l = ax.legend()
+    l.set_title(custom_color_label)
+    plt.title("Unterschied zwischen \n'" +group_bars_question.text + "'\n UND \n'" + group_color_question.text + "'")
 
 
 def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 , n = -1):
