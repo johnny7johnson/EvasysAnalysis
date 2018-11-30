@@ -116,7 +116,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         plot_cross_table(answers_6_1, answers_5_1, question_6_1, question_5_1, custom_color_label="Häufigkeit der Nutzung")
 
 
-                #split into 2+3 (often) and 4+5 (rare)
+        #split into 2+3 (often) and 4+5 (rare)
         question_5_1 = q(categoryNr = 5, questionNr = 1)
         answers_5_1 = question_5_1.single_choice_answers
         answers_5_1[answers_5_1 == 2] = 'oft'
@@ -124,27 +124,48 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         answers_5_1[answers_5_1 == 4] = 'selten'
         answers_5_1[answers_5_1 == 5] = 'selten'
         question_5_2 = q(categoryNr = 5, questionNr = 2)
-        answers_5_2 = question_5_2.multiple_choice_answers
 
-        # x = [answers_5_2.iloc[:,0], answers_5_2.iloc[:,1] ]
-        # ct = pd.crosstab(x, answers_5_1,  margins=True)
-        # print(ct)
-        # stacked = ct.stack().reset_index().rename(columns={0:'value'})
-
-        # fig, ax = plt.subplots()
-        # sns.barplot(x=x, y=stacked.value, hue= answers_5_1)
-
-        # heurisctics_5_2 = []
-        # heurisctics_5_2 = answers_5_2.values.tolist()
-        # shape = answers_5_2.shape[1] #should be 5
-        # for nr in range(0, shape):
-        #     ans = answers_5_2.iloc[:, nr].values
-        #     count_ones_occurence = (ans == 1).sum();
-        #     heurisctics_5_2.append(count_ones_occurence)
-        
         plot_grouped_multiple_choice_percentages(question_5_2, answers_5_1, question_5_1)
-        #plot_cross_table(heurisctics_5_2, answers_5_1, answers_5_2, question_5_1, custom_color_label="Häufigkeit der Nutzung")
         
+        plot_grouped_multiple_choice_percentages(q(categoryNr = 6, questionNr = 2), answers_5_1, question_5_1)
+
+        q_6_2_ans = q(categoryNr = 6, questionNr = 2).multiple_choice_answers
+        # q_6_2_ans = q_6_2_ans.rename(index=str, columns={ q_6_2_ans.columns.values[0]:q_6_2_ans.columns.values[0]
+        #     , q_6_2_ans.columns.values[1]: q_6_2_ans.columns.values[1], q_6_2_ans.columns.values[2]: q_6_2_ans.columns.values[2]
+        #     , q_6_2_ans.columns.values[3]: q_6_2_ans.columns.values[3], q_6_2_ans.columns.values[4]:q_6_2_ans.columns.values[4]
+        #     , q_6_2_ans.columns.values[5]: q_6_2_ans.columns.values[5]})
+
+        q_6_4_ans = q(categoryNr = 6, questionNr = 4).multiple_choice_answers
+        q_6_4_ans = q_6_4_ans.rename(index=str, columns={ q_6_4_ans.columns.values[0]:q_6_2_ans.columns.values[0]
+            , q_6_4_ans.columns.values[1]: q_6_2_ans.columns.values[1], q_6_4_ans.columns.values[2]: q_6_2_ans.columns.values[2]
+            , q_6_4_ans.columns.values[3]: q_6_2_ans.columns.values[3], q_6_4_ans.columns.values[4]:q_6_2_ans.columns.values[4]
+            , q_6_4_ans.columns.values[5]: q_6_2_ans.columns.values[5]})
+
+        q_6_6_ans = q(categoryNr = 6, questionNr = 6).multiple_choice_answers
+        q_6_6_ans = q_6_6_ans.rename(index=str, columns={ q_6_6_ans.columns.values[0]:q_6_2_ans.columns.values[0]
+            , q_6_6_ans.columns.values[1]: q_6_2_ans.columns.values[1], q_6_6_ans.columns.values[2]: q_6_2_ans.columns.values[2]
+            , q_6_6_ans.columns.values[3]: q_6_2_ans.columns.values[3], q_6_6_ans.columns.values[4]:q_6_2_ans.columns.values[4]
+            , q_6_6_ans.columns.values[5]: q_6_2_ans.columns.values[5]})
+
+        #generate group
+        #literatur_group = np.zeros(q_6_2.multiple_choice_answers.shape[0])
+        literatur_group = np.full(q_6_2_ans.shape[0], 'Bücher')
+        g = np.full(q_6_4_ans.shape[0], 'Wissenschaftliche Paper')
+        literatur_group = np.concatenate((literatur_group, g), axis=None)
+        literatur_group = np.concatenate((literatur_group, np.full(q_6_6_ans.shape[0], 'Zeitschriften (CT, Chip, o.ä.)')),axis=None)
+        q_6_4_ans.index = q_6_2_ans.index +q_6_2_ans.shape[0]
+        q_6_6_ans.index = q_6_4_ans.index +q_6_2_ans.shape[0]+ q_6_4_ans.shape[0]
+        
+        answers = [q_6_2_ans, q_6_4_ans ,q_6_6_ans]
+        
+        all = pd.concat(answers)
+        #all = q_6_2_ans.append(q_6_4_ans.append(q_6_6_ans))
+        dummyQuestion = q(categoryNr = 6, questionNr = 2)
+        dummyQuestion.multiple_choice_answers = all
+        dummyQuestion.text = "Ich beschaffe mir Bücher, wisschenschaftliche Paper oder Zeitschriften ... "
+        plot_grouped_multiple_choice_percentages(dummyQuestion, literatur_group, Question())
+
+
 
     plt.show()
     
@@ -159,7 +180,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
 
-def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_question, custon_groups_label = ""):
+def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_question, custom_groups_label = "Häufigkeit der Nutzung"):
 
     countedGroups = []
     groupsizes = []
@@ -193,7 +214,7 @@ def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_questio
         rs.append(r_new)
         r = r_new
     
-    plt.subplots()
+    fig, ax = plt.subplots()
     for num in range(0, maxgroups):
         label = "" + str(np.unique(groups)[num]) + " (n = " + str(groupsizes[num]) + " )"
         plt.bar(rs[num], countedGroups[num], color=colors[num], width=barWidth, edgecolor='white', label=label)
@@ -204,7 +225,10 @@ def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_questio
     plt.title("Unterschied zwischen \n'" +m_c_question.text + "'\n UND \n'" + group_question.text + "'")
     plt.xlabel(m_c_question.text)
     plt.ylabel('% ausgewählt')
-    plt.legend()
+    #plt.legend()
+    l = ax.legend()
+    if len(custom_groups_label) is not 0:
+        l.set_title(custom_groups_label)
 
 
 
@@ -225,6 +249,7 @@ def plot_cross_table(x_hist, y_hist, group_bars_question, group_color_question, 
     plt.title("Unterschied zwischen \n'" +group_bars_question.text + "'\n UND \n'" + group_color_question.text + "'")
 
     #https://stackoverflow.com/questions/43544694/using-pandas-crosstab-with-seaborn-stacked-barplots
+
 
 
 def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 , n = -1):
