@@ -85,20 +85,11 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         plot_multiple_choice_question_heuristics_bar(question_5_2, n=len(question_5_2.multiple_choice_answers))
         plt.title(title + '\n - Noch nie wissenschaftlich gearbeitet')
 
-        question_9_1 = q(categoryNr = 9, questionNr = 1)
-        title = question_9_1.text
-        answers_9_1 = question_9_1.single_choice_answers[workedScientific].astype(int)
-        plot_scala_question_heuristics_hist(question_9_1, answers_9_1
-            , labels=['Ich fühle mich überfordert', '2', '3', '4', 'Ich komme gut klar']
-            , n=len(answers_9_1))
-        plt.title(title + '\n - Bereits wissenschaftlich gearbeitet')
+        #boxplot 
+        plot_grouped_scala_distribution_boxplot(q(categoryNr = 9, questionNr = 1), workedScientific, 
+            group_labels_vector=["Noch nie wissenschaftlich gearbeitet", "Bereits wissenschaftlich gearbeitet"] 
+            ,scala_max_label="Ich komme gut klar.")
 
-        question_9_1 = q(categoryNr = 9, questionNr = 1)
-        answers_9_1 = question_9_1.single_choice_answers[~workedScientific].astype(int)
-        plot_scala_question_heuristics_hist(question_9_1, answers_9_1
-            , labels=['Ich fühle mich überfordert', '2', '3', '4', 'Ich komme gut klar']
-            , n=len(answers_9_1))
-        plt.title(title + '\n - Noch nie wissenschaftlich gearbeitet')
 
         #split into 2+3 (often) and 4+5 (rare)
         question_5_1 = q(categoryNr = 5, questionNr = 1)
@@ -113,7 +104,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         answers_6_1[answers_6_1 == 2] = 'auch wenn kostenpflichtig'
         #answers_6_1[5] = "trolololo"
 
-        plot_cross_table(answers_6_1, answers_5_1, question_6_1, question_5_1, custom_color_label="Häufigkeit der Nutzung")
+        plot_cross_table_bar(answers_6_1, answers_5_1, question_6_1, question_5_1, custom_color_label="Häufigkeit der Nutzung")
 
 
         #split into 2+3 (often) and 4+5 (rare)
@@ -125,9 +116,19 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         answers_5_1[answers_5_1 == 5] = 'selten'
         question_5_2 = q(categoryNr = 5, questionNr = 2)
 
-        plot_grouped_multiple_choice_percentages(question_5_2, answers_5_1, question_5_1)
+        plot_grouped_multiple_choice_percentages(question_5_2, answers_5_1, question_5_1, custom_groups_label="Häufigkeit der Nutzung")
         
-        plot_grouped_multiple_choice_percentages(q(categoryNr = 6, questionNr = 2), answers_5_1, question_5_1)
+
+        question_8_1 =  q(categoryNr = 8, questionNr = 1)
+        answers_8_1 = question_8_1.single_choice_answers
+        answers_8_1[answers_8_1 == 1] = 'Ja'
+        answers_8_1[answers_8_1 == 2] = 'Nein'
+
+        plot_grouped_multiple_choice_percentages(question_5_2, answers_8_1, question_8_1, custom_groups_label="Bereits wissenschaftlich gearbeitet")
+
+
+        #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        plot_grouped_multiple_choice_percentages(q(categoryNr = 6, questionNr = 2), answers_5_1, question_5_1, custom_groups_label="Häufigkeit der Nutzung")
 
         q_6_2_ans = q(categoryNr = 6, questionNr = 2).multiple_choice_answers
         # q_6_2_ans = q_6_2_ans.rename(index=str, columns={ q_6_2_ans.columns.values[0]:q_6_2_ans.columns.values[0]
@@ -163,7 +164,7 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
         dummyQuestion = q(categoryNr = 6, questionNr = 2)
         dummyQuestion.multiple_choice_answers = all
         dummyQuestion.text = "Ich beschaffe mir Bücher, wisschenschaftliche Paper oder Zeitschriften ... "
-        plot_grouped_multiple_choice_percentages(dummyQuestion, literatur_group, Question())
+        plot_grouped_multiple_choice_percentages(dummyQuestion, literatur_group, Question(), custom_title = "Ich beschaffe mir Bücher, wisschenschaftliche Paper oder Zeitschriften ... ")
 
 
 
@@ -179,9 +180,34 @@ def visualize_statistics(questionaire, heuristics = False, filtered = False): #a
     # Korrelation der Häufigkeiten der Tools mit Erfolg der letzten Arbeit?
     # Korrelation der Zufriedenheit der Vorgehensweise mit dem Erfolg der letzten Arbeit?
 
+# *************************************************************************************************************************
+# ******************************************* Plot functions **************************************************************
+# *************************************************************************************************************************
 
-def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_question, custom_groups_label = "Häufigkeit der Nutzung"):
 
+#   ********************************************************************
+#    Grouped single choice answers as boxplot as distribution.
+#    Only 2 Groups supported.  
+#   *******************************************************************
+def plot_grouped_scala_distribution_boxplot(scala_question, group_binary_vector, group_labels_vector = [], scala_max_label = "gut"):
+    answers_group_a = scala_question.single_choice_answers[~group_binary_vector].astype(int)
+    answers_group_b = scala_question.single_choice_answers[group_binary_vector].astype(int)
+    
+    plt.figure()
+    plt.boxplot([answers_group_a, answers_group_b])
+    plt.xticks([1, 2], group_labels_vector)
+    plt.subplots_adjust(bottom = 0.5)
+    plt.ylabel("Zufriedenheit. \n5 = " + scala_max_label)
+
+    apply_figure_config_all(scala_question)
+    
+
+
+#   ********************************************************************
+#    Grouped multiple choice answers as barplot as percent. 
+#    Groups as colors. Anwers as bar label. 
+#   *******************************************************************
+def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_question, custom_groups_label = "", custom_title = ""):
     countedGroups = []
     groupsizes = []
     for group in np.unique(groups):
@@ -222,18 +248,22 @@ def plot_grouped_multiple_choice_percentages(m_c_question, groups, group_questio
 
     plt.xticks([r[0]-0.25 + barWidth for r[0] in range(len(countedGroups[0]))], m_c_question.multiple_choice_answers.columns.values)
     apply_figure_config_heuristics(m_c_question, n=100)
-    plt.title("Unterschied zwischen \n'" +m_c_question.text + "'\n UND \n'" + group_question.text + "'")
+    if len(custom_title) is 0:
+        custom_title = "Unterschied zwischen \n'" +m_c_question.text + "'\n UND \n'" + group_question.text + "'"
+    plt.title(custom_title)
     plt.xlabel(m_c_question.text)
     plt.ylabel('% ausgewählt')
-    #plt.legend()
     l = ax.legend()
     if len(custom_groups_label) is not 0:
         l.set_title(custom_groups_label)
 
 
 
-
-def plot_cross_table(x_hist, y_hist, group_bars_question, group_color_question, custom_color_label = ""):
+#   ********************************************************************
+#    Grouped single choice answers as barplot as percent. 
+#    Groups as colors. Anwers as bar label. 
+#   *******************************************************************
+def plot_cross_table_bar(x_hist, y_hist, group_bars_question, group_color_question, custom_color_label = ""):
 
     df = pd.DataFrame({'colors':y_hist,'bars':x_hist}) #how many values has y?
     ct = pd.crosstab(df.bars, df.colors)
@@ -252,6 +282,9 @@ def plot_cross_table(x_hist, y_hist, group_bars_question, group_color_question, 
 
 
 
+#   ********************************************************************
+#    Heuristics of Scala questions as histogram.  
+#   *******************************************************************
 def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 , n = -1):
     plt.figure()
     plt.hist(vector, bins = range(1,bins + 2))
@@ -260,6 +293,9 @@ def plot_scala_question_heuristics_hist(question, vector, labels = [], bins = 5 
     apply_figure_config_heuristics(question, n = n)
 
 
+#   ********************************************************************
+#    Single Choice answers as pie plot in percent. 
+#   *******************************************************************
 def plot_single_choice_question_heuristics_pie(question, labels = [], free_text = [], free_text_question = "Freitext:", n = -1):
     y = []
     start = question.answer_range_start
@@ -272,7 +308,7 @@ def plot_single_choice_question_heuristics_pie(question, labels = [], free_text 
     if len(labels) is 0:
         labels = range(start, end + 1)
     fig1, ax1 = plt.subplots()
-    ax1.pie(y, startangle=90, labels = labels)
+    ax1.pie(y, autopct='%1.1f%%', startangle=90, labels = labels)
     ax1.axis('equal') 
 
     if len(free_text) is not 0:
@@ -280,9 +316,13 @@ def plot_single_choice_question_heuristics_pie(question, labels = [], free_text 
 
 
     apply_figure_config_all(question)
+    if n < 1:
+        plt.title(question.text + "  (n = "+ str(sum(y)) + " )")
 
 
-
+#   ********************************************************************
+#    Multiple choice answers as barplot in counts. 
+#   *******************************************************************
 def plot_multiple_choice_question_heuristics_bar(question, subplot = False, free_text = [], free_text_question = "Freitext:", n = -1):
     answers = question.multiple_choice_answers
     x = answers.columns.values
@@ -304,6 +344,10 @@ def plot_multiple_choice_question_heuristics_bar(question, subplot = False, free
     apply_figure_config_heuristics(question, n=n)
 
 
+
+# *************************************************************************************************************************
+#****************************** Help functions ****************************************************************************
+# *************************************************************************************************************************
 
 def add_free_text_to_figure(text, ax, question_text = "Freitext:"):
     plt.subplots_adjust(bottom = len(text)/10)
